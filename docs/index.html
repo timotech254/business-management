@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Business Management</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- AUTH SECTION -->
+  <div id="authSection">
+    <h2>Login</h2>
+
+    <form id="loginForm">
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
+
+    <p id="loginMessage"></p>
+  </div>
+
+  <!-- BUSINESS SYSTEM -->
+  <div class="container" style="display:none;">
+    <h1>TIMOTECH Business Management System</h1>
+
+    <button id="logoutBtn">Logout</button>
+
+    <form id="itemForm">
+      <input type="text" id="itemName" placeholder="Item Name" required />
+      <input type="number" id="incomingPrice" placeholder="Incoming Price" required />
+      <input type="number" id="outgoingPrice" placeholder="Outgoing Price" required />
+      <input type="number" id="quantity" placeholder="Quantity" required />
+      <button type="submit">Save Item</button>
+    </form>
+
+    <div class="controls">
+      <input type="text" id="searchInput" placeholder="Search item..." />
+      <button id="exportBtn">Export to Excel</button>
+    </div>
+
+    <p id="searchMessage" style="color:red; text-align:center;"></p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Incoming</th>
+          <th>Outgoing</th>
+          <th>Quantity</th>
+          <th>Profit</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="itemTable"></tbody>
+    </table>
+
+    <div class="summary">
+      <strong>Total Profit:</strong> KES <span id="totalProfit">0</span>
+    </div>
+  </div>
+
+  <!-- MODULE SCRIPT -->
+  <script type="module" src="js/script.js"></script>
+</body>
+</html>
