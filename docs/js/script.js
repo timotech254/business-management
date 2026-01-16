@@ -61,24 +61,38 @@ let editId = null;
 /* =========================
    LOGIN
    ========================= */
+const loginBtn = document.getElementById("loginBtn");
+
 loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
+
   loginMessage.textContent = "";
+  loginMessage.style.color = "";
+
+  loginBtn.disabled = true;
+  loginBtn.classList.add("loading");
 
   try {
     await signInWithEmailAndPassword(
       auth,
-      emailInput.value,
+      emailInput.value.trim(),
       passwordInput.value
     );
+
     loginMessage.style.color = "green";
     loginMessage.textContent = "Login successful";
-    loginForm.reset();
+
   } catch (err) {
     loginMessage.style.color = "red";
     loginMessage.textContent = err.message;
+
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.classList.remove("loading");
   }
 });
+
+
 
 /* =========================
    LOGOUT

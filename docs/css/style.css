@@ -68,6 +68,46 @@ h1, h2 {
 }
 
 /* =========================
+   LOGIN BUTTON SPINNER
+   ========================= */
+#loginBtn {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+#loginBtn .spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: none;
+}
+
+#loginBtn.loading .spinner {
+  display: inline-block;
+}
+
+#loginBtn.loading .btn-text {
+  opacity: 0.7;
+}
+
+#loginBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================
    CONTAINER
    ========================= */
 .container {
@@ -265,4 +305,110 @@ table tr:hover {
   background: #e0f2fe;
   color: #075985;
   border: 1px solid #0ea5e9;
+}
+
+/* =========================
+   RESPONSIVE DESIGN
+   ========================= */
+
+/* 📱 SMALL DEVICES (PHONES) */
+@media (max-width: 600px) {
+
+  body {
+    padding: 10px;
+  }
+
+  h1, h2 {
+    font-size: 20px;
+  }
+
+  /* Login */
+  #authSection {
+    margin: 30px 10px;
+    padding: 20px;
+  }
+
+  /* Forms stack vertically */
+  form {
+    grid-template-columns: 1fr;
+  }
+
+  form input,
+  form button {
+    font-size: 14px;
+  }
+
+  /* Controls stack */
+  .controls {
+    flex-direction: column;
+  }
+
+  .controls button {
+    width: 100%;
+  }
+
+  /* Table becomes scrollable */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  table th,
+  table td {
+    font-size: 13px;
+    padding: 8px;
+  }
+
+  /* Action buttons */
+  .actions button {
+    margin: 2px 0;
+    display: block;
+    width: 100%;
+  }
+
+  /* Summary */
+  .summary {
+    text-align: center;
+    font-size: 16px;
+  }
+
+  #logoutBtn {
+    width: 100%;
+  }
+}
+
+
+/* 📲 MEDIUM DEVICES (TABLETS) */
+@media (min-width: 601px) and (max-width: 900px) {
+
+  form {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .controls {
+    flex-wrap: wrap;
+  }
+
+  .controls input {
+    flex: 1 1 100%;
+  }
+
+  table th,
+  table td {
+    font-size: 14px;
+  }
+
+  .summary {
+    font-size: 17px;
+  }
+}
+
+
+/* 💻 SMALL LAPTOPS */
+@media (min-width: 901px) and (max-width: 1200px) {
+
+  form {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
