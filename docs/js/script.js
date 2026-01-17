@@ -34,6 +34,7 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 const itemsRef = collection(db, "items");
+const ordersRef = collection(db, "orders");
 
 /* =========================
    DOM ELEMENTS
@@ -55,8 +56,21 @@ const totalProfitEl = document.getElementById("totalProfit");
 const exportBtn = document.getElementById("exportBtn");
 const searchMessage = document.getElementById("searchMessage");
 
+// Orders DOM Elements
+const orderForm = document.getElementById("orderForm");
+const customerName = document.getElementById("customerName");
+const orderedItem = document.getElementById("orderedItem");
+const orderedQuantity = document.getElementById("orderedQuantity");
+const orderNotes = document.getElementById("orderNotes");
+const orderTable = document.getElementById("orderTable");
+const orderSearchInput = document.getElementById("orderSearchInput");
+const orderExportBtn = document.getElementById("orderExportBtn");
+const orderSearchMessage = document.getElementById("orderSearchMessage");
+
 let items = [];
+let orders = [];
 let editId = null;
+let editOrderId = null;
 
 /* =========================
    LOGIN
@@ -109,11 +123,14 @@ onAuthStateChanged(auth, user => {
     document.querySelector(".container").style.display = "block";
     document.getElementById("authSection").style.display = "none";
     loadItems();
+    loadOrders();
   } else {
     document.querySelector(".container").style.display = "none";
     document.getElementById("authSection").style.display = "block";
     items = [];
+    orders = [];
     table.innerHTML = "";
+    orderTable.innerHTML = "";
     totalProfitEl.textContent = "0";
   }
 });
@@ -121,8 +138,12 @@ onAuthStateChanged(auth, user => {
 /* =========================
    BUSINESS LOGIC
    ========================= */
+function calculateSingleItemProfit(item) {
+  return item.outgoing - item.incoming;
+}
+
 function calculateProfit(item) {
-  return (item.outgoing - item.incoming) * item.quantity;
+  return calculateSingleItemProfit(item) * item.quantity;
 }
 
 async function loadItems() {
@@ -142,6 +163,7 @@ function renderItems(filter = "") {
   searchMessage.textContent = filtered.length === 0 ? "Item not found" : "";
 
   filtered.forEach(item => {
+    const singleItemProfit = calculateSingleItemProfit(item);
     const profit = calculateProfit(item);
     totalProfit += profit;
 
@@ -151,6 +173,7 @@ function renderItems(filter = "") {
       <td>${item.incoming}</td>
       <td>${item.outgoing}</td>
       <td>${item.quantity}</td>
+      <td>${singleItemProfit}</td>
       <td>${profit}</td>
       <td>
         <button onclick="editItem('${item.id}')">Edit</button>
@@ -222,9 +245,9 @@ searchInput.addEventListener("input", () => {
    EXPORT TO EXCEL
    ========================= */
 exportBtn.addEventListener("click", () => {
-  let csv = "Item,Incoming,Outgoing,Quantity,Profit\n";
+  let csv = "Item,Incoming,Outgoing,Quantity,Single Item Profit,Profit\n";
   items.forEach(item => {
-    csv += `${item.name},${item.incoming},${item.outgoing},${item.quantity},${calculateProfit(item)}\n`;
+    csv += `${item.name},${item.incoming},${item.outgoing},${item.quantity},${calculateSingleItemProfit(item)},${calculateProfit(item)}\n`;
   });
 
   const blob = new Blob([csv], { type: "text/csv" });
@@ -232,6 +255,165 @@ exportBtn.addEventListener("click", () => {
   const a = document.createElement("a");
   a.href = url;
   a.download = "business_report.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* =========================
+   ORDERS MANAGEMENT
+   ========================= */
+
+async function loadOrders() {
+  const snapshot = await getDocs(ordersRef);
+  orders = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderOrders(orderSearchInput.value);
+}
+
+function renderOrders(filter = "") {
+  orderTable.innerHTML = "";
+
+  const filtered = orders.filter(o =>
+    o.customerName.toLowerCase().includes(filter.toLowerCase()) ||
+    o.itemName.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  orderSearchMessage.textContent = filtered.length === 0 && filter ? "Order not found" : "";
+
+  filtered.forEach(order => {
+    const orderDate = order.date ? new Date(order.date).toLocaleDateString() : "N/A";
+    
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${order.customerName}</td>
+      <td>${order.itemName}</td>
+      <td>${order.quantity}</td>
+      <td>${order.notes || "-"}</td>
+      <td>${orderDate}</td>
+      <td>
+        <button onclick="editOrder('${order.id}')">Edit</button>
+        <button onclick="deleteOrder('${order.id}')">Delete</button>
+      </td>
+    `;
+    orderTable.appendChild(row);
+  });
+}
+
+orderForm.addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const data = {
+    customerName: customerName.value,
+    itemName: orderedItem.value,
+    quantity: Number(orderedQuantity.value),
+    notes: orderNotes.value,
+    date: new Date().toISOString()
+  };
+
+  if (editOrderId) {
+    await updateDoc(doc(db, "orders", editOrderId), data);
+    editOrderId = null;
+  } else {
+    await addDoc(ordersRef, data);
+  }
+
+  orderForm.reset();
+  loadOrders();
+});
+
+window.editOrder = id => {
+  const order = orders.find(o => o.id === id);
+  if (!order) return;
+
+  customerName.value = order.customerName;
+  orderedItem.value = order.itemName;
+  orderedQuantity.value = order.quantity;
+  orderNotes.value = order.notes || "";
+  editOrderId = id;
+};
+
+window.deleteOrder = async id => {
+  if (confirm("Delete this order?")) {
+    await deleteDoc(doc(db, "orders", id));
+    loadOrders();
+  }
+};
+
+orderSearchInput.addEventListener("input", () => {
+  renderOrders(orderSearchInput.value);
+});
+
+/* =========================
+   EXPORT ORDERS TO PDF
+   ========================= */
+orderExportBtn.addEventListener("click", () => {
+  if (orders.length === 0) {
+    alert("No orders to export");
+    return;
+  }
+
+  let pdfContent = "%PDF-1.4\n";
+  let objectCount = 1;
+  let objects = [];
+
+  // Object 1: Catalog
+  objects.push("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+
+  // Object 2: Pages
+  objects.push("2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n");
+
+  // Object 3: Page
+  objects.push("3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n");
+
+  // Object 4: Stream (Content)
+  let content = "BT\n";
+  content += "/F1 20 Tf\n50 750 Td\n(Customer Orders & Out of Stock) Tj\n";
+  content += "0 -30 Td\n/F1 12 Tf\n";
+
+  let yPos = 700;
+  const lineHeight = 15;
+
+  orders.forEach((order, index) => {
+    const orderDate = order.date ? new Date(order.date).toLocaleDateString() : "N/A";
+    content += `(${index + 1}. ${order.customerName} - ${order.itemName} x${order.quantity} - ${orderDate}) Tj\nT*\n`;
+    yPos -= lineHeight;
+  });
+
+  content += "ET\n";
+
+  objects.push(`4 0 obj\n<< /Length ${content.length} >>\nstream\n${content}endstream\nendobj\n`);
+
+  // Object 5: Font
+  objects.push("5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n");
+
+  // Build PDF
+  let pdf = "%PDF-1.4\n";
+  let offset = 9;
+  let xref = [];
+
+  objects.forEach((obj, i) => {
+    xref.push(offset);
+    pdf += obj;
+    offset += obj.length;
+  });
+
+  // XRef table
+  let xrefOffset = offset;
+  let xrefTable = "xref\n";
+  xrefTable += `0 ${objects.length + 1}\n`;
+  xrefTable += "0000000000 65535 f\n";
+  xref.forEach(pos => {
+    xrefTable += `${pos.toString().padStart(10, "0")} 00000 n\n`;
+  });
+
+  pdf += xrefTable;
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\n`;
+  pdf += `startxref\n${xrefOffset}\n%%EOF`;
+
+  const blob = new Blob([pdf], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "customer_orders.pdf";
   a.click();
   URL.revokeObjectURL(url);
 });

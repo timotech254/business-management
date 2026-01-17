@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Business Management</title>
+  <title>Business Management System</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
-  <!-- AUTH SECTION -->
   <!-- AUTH SECTION -->
 <div id="authSection">
   <h2>Login</h2>
@@ -28,14 +27,52 @@
 
   <!-- BUSINESS SYSTEM -->
   <div class="container" style="display:none;">
-    <h1>TIMOTECH Business Management System</h1>
-
+    <h1>TIMOTECH Business Management</h1>
     <button id="logoutBtn">Logout</button>
+
+    <!-- ORDERS/OUT OF STOCK SECTION -->
+    <div class="section-divider">
+      <h2>Customer Orders & Out of Stock Items</h2>
+    </div>
+
+    <form id="orderForm">
+      <input type="text" id="customerName" placeholder="Customer Name" required />
+      <input type="text" id="orderedItem" placeholder="Item Name" required />
+      <input type="number" id="orderedQuantity" placeholder="Quantity" required />
+      <input type="text" id="orderNotes" placeholder="Notes (Optional)" />
+      <button type="submit">Register Order</button>
+    </form>
+
+    <div class="controls">
+      <input type="text" id="orderSearchInput" placeholder="Search order..." />
+      <button id="orderExportBtn">Export to PDF</button>
+    </div>
+
+    <p id="orderSearchMessage" style="color:red; text-align:center;"></p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Item Name</th>
+          <th>Quantity</th>
+          <th>Notes</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="orderTable"></tbody>
+    </table>
+
+    <!-- INVENTORY SECTION -->
+    <div class="section-divider">
+      <h2>Inventory Management</h2>
+    </div>
 
     <form id="itemForm">
       <input type="text" id="itemName" placeholder="Item Name" required />
-      <input type="number" id="incomingPrice" placeholder="Incoming Price" required />
-      <input type="number" id="outgoingPrice" placeholder="Outgoing Price" required />
+      <input type="number" id="incomingPrice" placeholder="Buying Price" required />
+      <input type="number" id="outgoingPrice" placeholder="Selling Price" required />
       <input type="number" id="quantity" placeholder="Quantity" required />
       <button type="submit">Save Item</button>
     </form>
@@ -47,23 +84,24 @@
 
     <p id="searchMessage" style="color:red; text-align:center;"></p>
 
+    <div class="summary">
+      <strong>Total Profit:</strong> KES <span id="totalProfit">0</span>
+    </div>
+
     <table>
       <thead>
         <tr>
           <th>Item</th>
-          <th>Incoming</th>
-          <th>Outgoing</th>
+          <th>Buying Price</th>
+          <th>Selling Price</th>
           <th>Quantity</th>
+          <th>Single Item Profit</th>
           <th>Profit</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody id="itemTable"></tbody>
     </table>
-
-    <div class="summary">
-      <strong>Total Profit:</strong> KES <span id="totalProfit">0</span>
-    </div>
   </div>
 
   <!-- MODULE SCRIPT -->
